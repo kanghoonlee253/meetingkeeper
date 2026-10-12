@@ -63,7 +63,7 @@ class Transcriber(threading.Thread):
         embedder = None
         if self.tracker:
             from mk.speakers import SpeakerEmbedder
-            embedder = SpeakerEmbedder()
+            embedder = SpeakerEmbedder(threads=2)
         self.on_status(f"준비 완료 — 모델 {self.model_name}, CPU 스레드 {self.cpu_threads}")
         while not self._stop_event.is_set():
             try:
@@ -72,35 +72,41 @@ class Transcriber(threading.Thread):
                 if self._finish_event.is_set():
                     break
                 continue
-            t0 = time.monotonic()
-            segments, _ = model.transcribe(
-                utt.audio, language="en", beam_size=1, vad_filter=False,
-                condition_on_previous_text=False, without_timestamps=True,
-            )
-            segments = list(segments)
-            proc = time.monotonic() - t0
-            if not segments:
-                continue
-            if all(s.no_speech_prob > 0.6 and s.avg_logprob < -1.0 for s in segments):
-                continue
-            text = " ".join(s.text.strip() for s in segments).strip()
-            duration = len(utt.audio) / 16000
-            if not text or (duration < 2.0 and text.lower() in HALLUCINATIONS):
-                continue
-            speaker, emb = None, None
-            if embedder and utt.source == self.others_source:
-                emb = embedder(utt.audio)
-                speaker = self.tracker.assign(emb, duration)
-            self.on_result({
-                "source": utt.source,
-                "text": text,
-                "start_wall": utt.start_wall,
-                "duration": duration,
-                "process_sec": proc,
-                "delay_sec": time.monotonic() - utt.ended_mono,
-                "backlog": self.in_queue.qsize(),
-                "speaker": speaker,
-                "embedding": emb,
-            })
+            others = embedder is not None and utt.source == self.others_source
+            # Fast turn-taking leaves no pause between speakers: cut where the voice changes.
+            cuts = embedder.change_points(utt.audio) if others else []
+            bounds = [0] + cuts + [len(utt.audio)]
+            for b0, b1 in zip(bounds, bounds[1:]):
+                piece = utt.audio[b0:b1]
+                t0 = time.monotonic()
+                segments, _ = model.transcribe(
+                    piece, language="en", beam_size=1, vad_filter=False,
+                    condition_on_previous_text=False, without_timestamps=True,
+                )
+                segments = list(segments)
+                proc = time.monotonic() - t0
+                if not segments:
+                    continue
+                if all(s.no_speech_prob > 0.6 and s.avg_logprob < -1.0 for s in segments):
+                    continue
+                text = " ".join(s.text.strip() for s in segments).strip()
+                duration = len(piece) / 16000
+                if not text or (duration < 2.0 and text.lower() in HALLUCINATIONS):
+                    continue
+                speaker, emb = None, None
+                if others:
+                    emb = embedder(piece)
+                    speaker = self.tracker.assign(emb, duration)
+                self.on_result({
+                    "source": utt.source,
+                    "text": text,
+                    "start_wall": utt.start_wall + b0 / 16000,
+                    "duration": duration,
+                    "process_sec": proc,
+                    "delay_sec": time.monotonic() - utt.ended_mono,
+                    "backlog": self.in_queue.qsize(),
+                    "speaker": speaker,
+                    "embedding": emb,
+                })
         if self._on_done:
             self._on_done()
