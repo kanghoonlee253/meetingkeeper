@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Large / generated (models are downloaded by setup_models.py)
+models/
+build/
+dist/
+samples/
+
+# Personal data: name dictionary with colleagues' voiceprints, settings, meeting minutes
+data/
+meetings/

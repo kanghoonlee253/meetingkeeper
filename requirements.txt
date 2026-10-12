@@ -1,0 +1,10 @@
+faster-whisper==1.2.1
+PyAudioWPatch==0.2.12.9
+numpy
+soxr
+PySide6
+sentencepiece
+sherpa-onnx
+python-docx
+# CPU wheel: pip install llama-cpp-python --only-binary=:all: --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+llama-cpp-python==0.3.36
