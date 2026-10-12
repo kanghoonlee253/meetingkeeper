@@ -714,11 +714,52 @@ def selftest():
     return 0 if all(line.startswith("OK") for line in out) else 1
 
 
+def join_split_models():
+    """The distribution zips must stay under 2 GB, so big model files ship as <name>.part1of3 …
+    Joins them into <name> once. Returns a list of problems (missing parts)."""
+    import glob
+    import re
+    from mk.transcriber import MODELS_DIR
+    problems = []
+    for first in glob.glob(os.path.join(MODELS_DIR, "**", "*.part1of*"), recursive=True):
+        target, total = re.match(r"^(.*)\.part1of(\d+)$", first).groups()
+        parts = [f"{target}.part{i}of{total}" for i in range(1, int(total) + 1)]
+        missing = [os.path.basename(p) for p in parts if not os.path.exists(p)]
+        if missing:
+            problems.append(f"{os.path.basename(target)}: {', '.join(missing)} 없음")
+            continue
+        tmp = target + ".joining"
+        with open(tmp, "wb") as out:
+            for p in parts:
+                with open(p, "rb") as f:
+                    while chunk := f.read(16 << 20):
+                        out.write(chunk)
+        os.replace(tmp, target)
+        for p in parts:
+            os.remove(p)
+    return problems
+
+
 def main():
     _log_errors()
     if "--selftest" in sys.argv:
+        join_split_models()
         sys.exit(selftest())
     app = QApplication(sys.argv)
+    splash = QLabel("MeetingKeeper 처음 실행 준비 중… (모델 파일 합치는 중, 잠시만 기다려 주세요)")
+    splash.setWindowFlag(Qt.SplashScreen)
+    splash.setStyleSheet("padding:24px;font-size:14px;background:white;border:1px solid #ccc;")
+    from mk.transcriber import MODELS_DIR
+    import glob
+    if glob.glob(os.path.join(MODELS_DIR, "**", "*.part1of*"), recursive=True):
+        splash.show()
+        app.processEvents()
+    problems = join_split_models()
+    splash.close()
+    if problems:
+        QMessageBox.warning(None, "MeetingKeeper",
+                            "모델 파일 일부가 없습니다. 압축 파일(MeetingKeeper_1~N.zip)을 모두 "
+                            "같은 위치에 풀었는지 확인해 주세요.\n\n" + "\n".join(problems))
     win = MainWindow()
     win.show()
     sys.exit(app.exec())

@@ -1,4 +1,4 @@
-﻿# Builds dist\MeetingKeeper (exe + models + 사용설명서) and dist\MeetingKeeper.zip for the company laptop.
+﻿# Builds dist\MeetingKeeper (exe + models + 사용설명서) and dist\MeetingKeeper_1..N.zip (each < 2 GB) for the company laptop.
 # Usage (from the project folder):  powershell -ExecutionPolicy Bypass -File build.ps1
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
@@ -18,6 +18,6 @@ Get-Content "dist\MeetingKeeper\data\selftest.txt" -Encoding UTF8
 if ($p.ExitCode -ne 0) { Write-Warning "Self-test reported a failure (see above)" }
 Remove-Item -Recurse -Force "dist\MeetingKeeper\data"
 
-if (Test-Path dist\MeetingKeeper.zip) { Remove-Item dist\MeetingKeeper.zip }
-.\.venv\Scripts\python.exe -c "import os,zipfile; os.chdir('dist'); z=zipfile.ZipFile('MeetingKeeper.zip','w',zipfile.ZIP_STORED,allowZip64=True); [z.write(os.path.join(r,f)) for r,_,fs in os.walk('MeetingKeeper') for f in fs]; z.close()"
-"Done: dist\MeetingKeeper.zip"
+.\.venv\Scripts\python.exe package_zips.py
+if ($LASTEXITCODE -ne 0) { throw "Packaging failed" }
+"Done: dist\MeetingKeeper_*.zip"

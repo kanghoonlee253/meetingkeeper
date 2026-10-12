@@ -7,9 +7,13 @@ MeetingKeeper — 영어 회의 실시간 자막 · 한글 번역 · 회의록
 
 1. 설치
 -------
-1) 이 폴더(MeetingKeeper)를 통째로 원하는 곳에 둡니다.  예) D:\MeetingKeeper
-2) MeetingKeeper.exe 를 더블클릭합니다.
+1) MeetingKeeper_1.zip, _2.zip, _3.zip … 을 모두 "같은 위치"에 압축 풉니다.
+   - zip 우클릭 → [모두 압축 풀기] → 위치를  D:\  로 지정 (세 개 모두 똑같이)
+   - 그러면 D:\MeetingKeeper 폴더 하나로 합쳐집니다.
+   ※ 기본값(D:\MeetingKeeper_1 처럼 zip 이름 폴더)으로 풀면 안 됩니다.
+2) D:\MeetingKeeper\MeetingKeeper.exe 를 더블클릭합니다.
    - "Windows의 PC 보호" 창이 뜨면: [추가 정보] → [실행]
+   - 처음 한 번은 모델 파일 조각을 합치느라 10~30초 걸립니다.
 3) 바탕화면 바로가기: MeetingKeeper.exe 우클릭 → [추가 옵션 표시] → [보내기] → [바탕 화면에 바로 가기 만들기]
 
 ※ 폴더 안의 models, _internal 폴더는 지우거나 옮기지 마세요.
