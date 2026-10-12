@@ -37,10 +37,12 @@ def main():
     for old in os.listdir("."):
         if old.startswith("MeetingKeeper") and old.endswith(".zip"):
             os.remove(old)
-    # Program files first (zip 1 is usable on its own for the app shell), then big files largest-first.
-    small = [it for it in items() if it[3] < 50_000_000]
-    big = sorted((it for it in items() if it[3] >= 50_000_000), key=lambda it: -it[3])
-    bins = [[small, sum(it[3] for it in small)]]
+    # Zip 1 holds the whole program (exe, _internal, guide) so a missing later zip can only ever mean
+    # missing model files, which the app reports. Models fill the rest, largest first.
+    is_model = lambda it: it[0].startswith(os.path.join(SRC, "models") + os.sep)
+    program = [it for it in items() if not is_model(it)]
+    big = sorted((it for it in items() if is_model(it)), key=lambda it: -it[3])
+    bins = [[program, sum(it[3] for it in program)]]
     for it in big:
         for b in bins:
             if b[1] + it[3] <= LIMIT:

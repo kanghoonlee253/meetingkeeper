@@ -756,6 +756,12 @@ def main():
         app.processEvents()
     problems = join_split_models()
     splash.close()
+    from mk.speakers import EMBED_MODEL
+    from mk.summarizer import MODEL_PATH as GEMMA
+    from mk.transcriber import WHISPER_DIR
+    required = {"음성인식": os.path.join(WHISPER_DIR, MODELS[0], "model.bin"),
+                "화자 구분": EMBED_MODEL, "번역·요약(Gemma)": GEMMA}
+    problems += [f"{name} 모델 없음" for name, path in required.items() if not os.path.isfile(path)]
     if problems:
         QMessageBox.warning(None, "MeetingKeeper",
                             "모델 파일 일부가 없습니다. 압축 파일(MeetingKeeper_1~N.zip)을 모두 "
