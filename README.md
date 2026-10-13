@@ -50,3 +50,7 @@ powershell -ExecutionPolicy Bypass -File build.ps1
 
 ## 모델 라이선스
 Gemma 3 (Gemma Terms of Use), Whisper (MIT), TitaNet (CC-BY-4.0), NLLB-200 (CC-BY-NC-4.0, 비상업용).
+
+---
+
+Copyright (c) 2026 이강훈. All rights reserved.
